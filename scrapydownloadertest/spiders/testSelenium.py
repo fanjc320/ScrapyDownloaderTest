@@ -86,7 +86,7 @@ def TestApkpure():
 
     count = 1
     for i in range(len(latestGames)):
-        if count > 2:
+        if count > 1:
             break
         ++count
         # browser.implicitly_wait(5)
@@ -94,8 +94,8 @@ def TestApkpure():
         item = latestGames[i]
         # 判断元素是否可以点击
         # answer = item.is_enabled()
-        print(f'item:{i}:\t{item} is_enabled:')
-        item.screenshot("item.png")
+        print(f'item:{i}:\t{item} latestGames:{latestGames}')
+        # item.screenshot("item.png")
         # ActionChains(browser).move_to_element(item).click().perform() #has no size and location
         browser.implicitly_wait(4)
         item.click()
@@ -113,8 +113,6 @@ def TestApkpure():
         xf = browser.find_element(By.XPATH, '//*[@id="aswift_2"]')
         print(">>>>>xf:", xf)
 
-        body_before = browser.find_element(By.XPATH, "/html/body")
-        print(">>>>>body_before:", body_before)
         browser.switch_to.default_content()
         browser.switch_to.frame(xf)
 
@@ -128,20 +126,14 @@ def TestApkpure():
         # # time.sleep(2)
 
         browser.implicitly_wait(4)
-        # body = browser.find_element(By.XPATH, "/html/body") #ok
-        # body = browser.find_element(By.XPATH, "/html/body/div[1]/div[1]/div[2]/div[2]/div/div/div[2]/div/div/div[3]")# not ok
-        # body = browser.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[2]/div/div')#
-        # body = browser.find_element(By.XPATH, '/html/body/div[1]/div[2]')#not ok
-        # body = browser.find_element(By.XPATH, '/html/body/div[1]/div[1]//*[@id="dismiss-button"]')#not ok
-        # body = browser.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[2]')  # ok
         body = browser.find_element(By.XPATH, '/html/body//*[@id="ad_iframe"]')  # ok
-        if body:
-            print("body:", body)
-            print("body.text:", body.text)#body.text: Ad
-            print("body.html:", body.get_attribute("outerHTML"))
-            body.click()
-        else:
-            print("--------------- dismiss111 no found")
+        # if body:
+        #     print("body:", body)
+        #     print("body.text:", body.text)#body.text: Ad
+        #     print("body.html:", body.get_attribute("outerHTML"))
+        #     body.click()
+        # else:
+        #     print("--------------- dismiss111 no found")
 
         browser.switch_to.frame(body)
 
@@ -154,7 +146,7 @@ def TestApkpure():
 
 
         # except:
-        print("--------------- dismiss no found !!!")
+        # print("--------------- dismiss no found !!!")
         # print(browser.page_source)
         # browser.refresh()
 
@@ -179,13 +171,20 @@ def TestApkpure():
         showLessBtn = browser.find_element(By.XPATH, '//div[@class="ver_show_more"]')
         browser.execute_script("arguments[0].scrollIntoView();", showLessBtn)
 
-        downloadBtn = browser.find_element(By.XPATH, '//ul/li[last()-1]/a/div[@class="ver_download_btn"]')#最后一个download按钮
+        lastBtnXpath = '//ul/li[last()-1]/a/div[@class="ver_download_btn"]'
+        downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)#最后一个download按钮
         print("downloadBtn:", downloadBtn)
         downloadBtn.click()
 
-        #此时到了这个页面
-        #https://apkpure.com/merge-fashion-romance-story/com.infiniplay.merge.fashion.romance.story/download/1.0.4
+        # labelLastBtn = browser.find_element(By.XPATH, lastBtnXpath)
+        browser.execute_script("arguments[0].scrollIntoView();", downloadBtn)
 
+        downloadBtns = browser.find_elements(By.XPATH, '//*[@id="version-list"]//a[@class="download-btn"]')  # 最后一个download按钮
+        print("downloadBtns:", downloadBtns)
+        downloadBtns[len(downloadBtns) - 1].click()
+        i+=1
+
+        time.sleep(6)
 
 def clickDownload():
     pass
