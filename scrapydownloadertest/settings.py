@@ -18,8 +18,8 @@ NEWSPIDER_MODULE = 'scrapydownloadertest.spiders'
 # USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
-
+ROBOTSTXT_OBEY = False
+DOWNLOAD_TIMEOUT = 1200 # 没用?
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 # CONCURRENT_REQUESTS = 32
 
@@ -64,9 +64,17 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 # ITEM_PIPELINES = {
-#    'scrapydownloadertest.pipelines.ScrapydownloadertestPipeline': 300,
+#    # 'scrapy.pipelines.files.FilesPipeline': 1,
+#    'scrapy.pipelines.images.ImagesPipeline': 1,
+#    # 'scrapydownloadertest.pipelines.ScrapydownloadertestPipeline': 300,
+#    'scrapydownloadertest.pipelines.MyImagesPipeline': 300,
 # }
-
+# FILES_STORE=r'download'
+# FILES_STORE=r'D:\python\crawlers\scrapy-downloader-test'
+FILES_STORE='./test'
+IMAGES_STORE = './test'
+# FILES_FILES_FIELD = 'file_urls'
+# FILES_RESULT_FIELD = "files"
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
 # AUTOTHROTTLE_ENABLED = True
