@@ -25,6 +25,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from zipfile import ZipFile
 
+# 参考https://stackoverflow.com/questions/70583894/cannot-click-a-button-using-python-selenium-on-a-certain-website
+
 def baseTest():
     browser = webdriver.Chrome()
     browser.get(r'https://www.baidu.com/')
@@ -125,34 +127,37 @@ def searchCrawledApks(dir):
 def closeAd(browser):
     frames = browser.find_elements(By.TAG_NAME, "iframe")
     for frame in frames:
-        frameLabel = frame.get_attribute("aria-label") #
-        frameId = frame.get_attribute("id") #
-        frameStyle = frame.get_attribute("style")
-        print("frameLabel:", frameLabel, " id:", frameId)
-        if frameLabel == "Advertisement" and "max-height" in frameStyle:
-            print("switch to frame swift")
-            browser.switch_to.frame(frame)
+        try:
+            frameLabel = frame.get_attribute("aria-label") #
+            frameId = frame.get_attribute("id") #
+            frameStyle = frame.get_attribute("style")
+            print("frameLabel:", frameLabel, " id:", frameId)
+            if frameLabel == "Advertisement" and "max-height" in frameStyle:
+                print("switch to frame swift")
+                browser.switch_to.frame(frame)
 
-            try:
-                dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
-                if dismissBtn:
-                    print("dismissBtn:", dismissBtn)
-                    dismissBtn.click()
-                break  # Exit loop once you switch to the correct frame
-            except:
-                framesAd = browser.find_elements(By.TAG_NAME, "iframe")
-                for frameAd in framesAd:
-                    frameAdId = frameAd.get_attribute("id")
-                    print("frameAdId:", frameAdId)
-                    if frameAdId == "ad_iframe":
-                        print("switch to frame Ad")
-                        browser.switch_to.frame(frameAd)
+                try:
+                    dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
+                    if dismissBtn:
+                        print("dismissBtn:", dismissBtn)
+                        dismissBtn.click()
+                    break  # Exit loop once you switch to the correct frame
+                except:
+                    framesAd = browser.find_elements(By.TAG_NAME, "iframe")
+                    for frameAd in framesAd:
+                        frameAdId = frameAd.get_attribute("id")
+                        print("frameAdId:", frameAdId)
+                        if frameAdId == "ad_iframe":
+                            print("switch to frame Ad")
+                            browser.switch_to.frame(frameAd)
 
-                        dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
-                        if dismissBtn:
-                            print("dismissBtn:", dismissBtn)
-                            dismissBtn.click()
-                        break  # Exit loop once you switch to the correct frame
+                            dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
+                            if dismissBtn:
+                                print("dismissBtn:", dismissBtn)
+                                dismissBtn.click()
+                            break  # Exit loop once you switch to the correct frame
+        except:
+            print("closeAd iframe except!")
 
     browser.switch_to.default_content()
 
@@ -178,30 +183,41 @@ def TestApkpure():
     #     for name in dirs:
     #         print(os.path.join(root, name))
 
-
-    # prefs = {"download.default_directory": "../apks"}
     option.add_experimental_option("prefs", prefs)
     option.add_experimental_option("detach", True)
     option.add_argument("disable-popup-blocking")
     # option.add_experimental_option("debuggerAddress", "127.0.0.1:12306")
     browser = webdriver.Chrome(options=option)
+
+    # try:
+    #     browser.get("http://www.google.com")
+    #     input_element = browser.find_element_by_name("q")
+    #     input_element.send_keys("fuck you")
+    #     input_element.submit()
+    #     link = browser.find_element_by_xpath(
+    #         '//*[@id="rso"]/div[1]/div/div[2]/div/div/h3/a').click()
+    #     #     for windows change command to control.
+    #     ActionChains(browser).move_to_element(link).key_down(Keys.COMMAND).click(link).key_up(Keys.COMMAND).perform()
+    #     time.sleep(5)
+    # except Exception as e:
+    #     print(e)
+    #     browser.close()
+    #
+    # return
+
     # browser.get(r'https://apkpure.com/game_casual')
     browser.get(r'https://apkpure.com/cn/game_casual')
-    print("TestApkpure window handle:")
-    print(browser.current_window_handle)
-    # latestGames = self.browser.find_elements(By.XPATH, '//main/div[5]/div[2]/div[1]/div/div/ul/li[@class="grid-col"]//div[@class="grid-row"]')
-    # latestGames = browser.find_elements(By.XPATH,'//main/div[5]/div[2]/div[1]/div/div/ul/li/div/a[contains(@class, "apk-grid-button")]')
-    # browser.implicitly_wait(4)
+    print("TestApkpure window handle:", browser.current_window_handle)
     # 最近更新的游戏
     xpath_latestGames = '/html/body/main/div[5]/div[2]/div[1]/div/div/ul/li/div/a[1]'
-    text = WebDriverWait(browser, 10, 0.2).until(lambda x: x.find_elements(By.XPATH, xpath_latestGames))
-    print("xpath_latestGames:", text)
-    latestGames = browser.find_elements(By.XPATH, xpath_latestGames)
+    latestGames = WebDriverWait(browser, 4, 0.2).until(lambda x: x.find_elements(By.XPATH, xpath_latestGames))
+    # print("xpath_latestGames:", latestGames)
+    # latestGames = browser.find_elements(By.XPATH, xpath_latestGames)
     # latestGames = browser.find_elements_by_xpath(By.XPATH,'//main/div[5]/div[2]/div[1]/div/div/ul/li/div/a[contains(@class, "apk-grid-button")]')
     print("latestGames:", latestGames)
 
     try:
-        element = WebDriverWait(browser, 10).until(
+        element = WebDriverWait(browser, 4, 0.2).until(
             EC.presence_of_element_located((By.XPATH, '//div[@id="policy-info"]/div/div[@class="btn"]/span[1]'))
             # EC.element_to_be_clickable((By.XPATH, '//div[@id="policy-info"]/div/div[@class="btn"]/span[1]'))
         )
@@ -222,83 +238,66 @@ def TestApkpure():
             break
         count += 1
         # browser.implicitly_wait(5)
-        time.sleep(3)
-
+        browser.switch_to.window(browser.window_handles[0])
         item = latestGames[i]
+
+        href = item.get_attribute("href")
         # 判断元素是否可以点击
         # answer = item.is_enabled()
+        print("href:", href)
         print(f'item:{i}:\t{item} latestGames:{latestGames}')
+
         # item.screenshot("item.png")
         # ActionChains(browser).move_to_element(item).click().perform() #has no size and location
-        browser.implicitly_wait(4)
+        # browser.implicitly_wait(4)
         # print("item.txt:", item.text)
         # item.send_keys(Keys.CONTROL)
         # item.click()
+        time.sleep(3)
         action = ActionChains(browser)
-        action.key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
-        print("go to new window_handle num:", len(browser.window_handles))
-        if len(browser.window_handles) >1:
-            print("go to new window_handle")
-            browser.switch_to.window(browser.window_handles[1])
+        # action.key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
+        # ActionChains(browser).key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
+        # ActionChains(browser).key_down(Keys.CONTROL).click(item).perform()
+
+        # action.key_down(Keys.CONTROL).perform()
+        # action.send_keys(Keys.CONTROL).perform()
+        # ActionChains(browser).key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
+        # item.click()
+        # action.key_up(Keys.CONTROL).perform()
+        # ActionChains(browser).move_to_element(item).key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
+
+        browser.execute_script("window.open('');")
+        browser.switch_to.window(browser.window_handles[1])
+        browser.get(href)
+
+        window_numb = len(browser.window_handles)
+        print("go to new window_handle before sleep num:", window_numb)
+        time.sleep(3)
+        # continue
+        print("go to new window_handle after sleep num:", window_numb)
+        if window_numb > 1:
+            browser.switch_to.window(browser.window_handles[window_numb-1])
         # latestGames[i].click()
         # browser.execute_script("window.open('');")
+        continue
 
-# 弹窗广告
-#         try:
-#             browser.implicitly_wait(4)
-#             xf = browser.find_element(By.XPATH, '//*[@id="aswift_2"]')
-#             print("switch to xf:", xf)
-#
-#             browser.switch_to.default_content()
-#             browser.switch_to.frame(xf)
-#
-#             # xf_src = xf.get_attribute("src")
-#             # print("xf_src:", xf_src)
-#
-
-        # browser.switch_to.frame('aswift_2')
-        # print("switch to ad_iframe>>>>>:")
-        # try:
-        #     dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
-        #     if dismissBtn:
-        #         print("dismissBtn:", dismissBtn)
-        #         dismissBtn.click()
-        # except:
-        #     print("dismissBtn not found")
-        #     browser.switch_to.frame('ad_iframe')
-        #     dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
-        #     if dismissBtn:
-        #         print("11 dismissBtn:", dismissBtn)
-        #         dismissBtn.click()
-        #     else:
-        #         print("11 dismissBtn not found")
-#
-#         except:
-#             print(" ad box no found !!!")
-#             # print(browser.page_source)
-#             # browser.refresh()
-#             browser.switch_to.default_content()
-
-        browser.switch_to.default_content()
-        #try关闭广告
         closeAd(browser)##############
-        return
+        # return
 
         apkName = browser.find_element(By.XPATH, '//*[@class="title_link no-rating"]/h1').text
         company = browser.find_element(By.XPATH, '//*[@class="details_sdk"]/span[@class="developer"]/a').text
         print("--------------- apk detail name:", apkName, " company:", company)
-
 
         js_code = 'window.scrollBy(0, 800)'  # 滑动指定距离
         # js_code = 'window.scrollBy(0, document.body.scrollHeight)'  # 滑动到底
         browser.execute_script(script=js_code)
         # browser.execute_script("arguments[0].scrollIntoView();", downloadBtn)
         print("--------------- scroll800")
-
+        continue
 # 更多版本
         try:
             # try关闭广告
-            closeAd(browser)  ##############
+            # closeAd(browser)  ##############
 
             # 有更多版本
             allVersionBtn = browser.find_element(By.XPATH, '//a[@class="more-version"]')
@@ -307,7 +306,7 @@ def TestApkpure():
             print("--------------- allVersion")
 
             # try关闭广告
-            closeAd(browser)  ##############
+            # closeAd(browser)  ##############
 
             showMoreBtn = browser.find_element(By.XPATH, '//div[@class="ver_show_more"]')
             print("showMoreBtn:", showMoreBtn)
@@ -349,9 +348,9 @@ def TestApkpure():
         downloadBtns[len(downloadBtns) - 1].click()
 
         i+=1
-        if len(browser.window_handles) >1:
-            browser.close()
-            browser.switch_to.window(browser.window_handles[0])
+        # if len(browser.window_handles) >1:
+        #     browser.close()
+        #     browser.switch_to.window(browser.window_handles[0])
         # time.sleep(6)
         # # 等待下载完成
         # wait = WebDriverWait(browser, 10)
