@@ -248,38 +248,23 @@ def TestApkpure():
         print(f'item:{i}:\t{item} latestGames:{latestGames}')
 
         # item.screenshot("item.png")
-        # ActionChains(browser).move_to_element(item).click().perform() #has no size and location
-        # browser.implicitly_wait(4)
-        # print("item.txt:", item.text)
-        # item.send_keys(Keys.CONTROL)
-        # item.click()
-        time.sleep(3)
-        action = ActionChains(browser)
+
+        # action = ActionChains(browser)
         # action.key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
         # ActionChains(browser).key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
-        # ActionChains(browser).key_down(Keys.CONTROL).click(item).perform()
-
         # action.key_down(Keys.CONTROL).perform()
-        # action.send_keys(Keys.CONTROL).perform()
         # ActionChains(browser).key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
         # item.click()
         # action.key_up(Keys.CONTROL).perform()
         # ActionChains(browser).move_to_element(item).key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
 
         browser.execute_script("window.open('');")
-        browser.switch_to.window(browser.window_handles[1])
-        browser.get(href)
-
         window_numb = len(browser.window_handles)
-        print("go to new window_handle before sleep num:", window_numb)
-        time.sleep(3)
-        # continue
-        print("go to new window_handle after sleep num:", window_numb)
-        if window_numb > 1:
-            browser.switch_to.window(browser.window_handles[window_numb-1])
-        # latestGames[i].click()
-        # browser.execute_script("window.open('');")
-        continue
+        browser.switch_to.window(browser.window_handles[window_numb-1])
+        browser.get(href)
+        # print("go to new window_handle after sleep num:", window_numb)
+        # if window_numb > 1:
+        #     browser.switch_to.window(browser.window_handles[window_numb-1])
 
         closeAd(browser)##############
         # return
@@ -293,11 +278,12 @@ def TestApkpure():
         browser.execute_script(script=js_code)
         # browser.execute_script("arguments[0].scrollIntoView();", downloadBtn)
         print("--------------- scroll800")
-        continue
+        # continue
 # 更多版本
         try:
+#         if True:
             # try关闭广告
-            # closeAd(browser)  ##############
+            closeAd(browser)  ##############
 
             # 有更多版本
             allVersionBtn = browser.find_element(By.XPATH, '//a[@class="more-version"]')
@@ -306,7 +292,7 @@ def TestApkpure():
             print("--------------- allVersion")
 
             # try关闭广告
-            # closeAd(browser)  ##############
+            closeAd(browser)  ############## 必须有
 
             showMoreBtn = browser.find_element(By.XPATH, '//div[@class="ver_show_more"]')
             print("showMoreBtn:", showMoreBtn)
@@ -321,14 +307,19 @@ def TestApkpure():
             downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
             print("have show more button", downloadBtn)
         except Exception as e:
-            lastBtnXpath = '//ul/li[last()]/a/div[@role="button"]'  # 没有"更多版本",多个下载
             try:
-                downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)
                 print("except show more button,try last button", downloadBtn)
+                lastBtnXpath = '//ul/li[last()]/a/div[@role="button"]'  # 没有"更多版本",多个下载
+                downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)
             except:
-                lastBtnXpath = '//div/a/span[@class="download old_versions_download"]'# 只有一个下载
-                downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
-                print("only one download button", downloadBtn)
+                try:
+                    print("only one download button", downloadBtn)
+                    lastBtnXpath = '//div/a/span[@class="download old_versions_download"]'# 只有一个下载
+                    downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
+                except:
+                    print("only one download button", downloadBtn)
+                    lastBtnXpath = '//div[@class="old-versions  google-anno-skip   "]/div/a[@class="version-item dt-old-versions-variant"]/span'  # 只有一个历史版本下载
+                    downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
         # finally:
         #     lastBtnXpath = '//ul/li[@class="ver_item_state"]'  # 有"更多版本"
         #     print("error no show more button")
@@ -336,12 +327,15 @@ def TestApkpure():
         # lastBtnXpath = '//ul/li/a[@class="ver_download_link"]/div[@class="ver_download_btn"]'
         # try关闭广告
         closeAd(browser)  ##############
-        # downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)#最后一个download按钮
+        downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)#最后一个download按钮
         print("lastBtnXpath:", lastBtnXpath, " downloadBtn:", downloadBtn)
-        # labelLastBtn = browser.find_element(By.XPATH, lastBtnXpath)
-        browser.execute_script("return arguments[0].scrollIntoView();", downloadBtn)
-        # downloadBtn.location_once_scrolled_into_view
-        downloadBtn.click()
+
+        #这个可能报错，不如move_to好使
+        # browser.execute_script("return arguments[0].scrollIntoView();", downloadBtn)
+        # downloadBtn.click()
+        ActionChains(browser).move_to_element(downloadBtn).click(downloadBtn).perform()
+
+
 
         downloadBtns = browser.find_elements(By.XPATH, '//*[@id="version-list"]//a[@class="download-btn"]')  # 最后一个download按钮
         print("downloadBtns:", downloadBtns)
