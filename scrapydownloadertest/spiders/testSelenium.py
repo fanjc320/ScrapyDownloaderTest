@@ -12,7 +12,9 @@ from bs4 import BeautifulSoup
 import sys
 import re
 import os
-
+import pickle
+import datetime
+from datetime import date, datetime
 from urllib import parse
 
 from selenium import webdriver
@@ -57,31 +59,29 @@ def baseTest():
 
     browser.close()
 
-def Test2345():
-    driver = webdriver.Chrome()
-    driver.get("https://apkpure.com/game_casual")
-    button = driver.find_element(By.ID, "button-id")
-    driver.switchTo().frame("city_set_ifr");
-    province = driver.findElement(By.id("province"));
-    province.click();
-    driver.quit();
-
 def searchAssembly(lib_path):
     foundAssembly = 0
     # print("lib_path:", lib_path)
-    for r, d, f in os.walk(lib_path):
-        print("lib so filename:", f)
+    for r, d, f in os.walk(lib_path, topdown= True):
+        fileCnt = len(f)
+        print("lib so fileCount:", fileCnt, " so:", f)
+        if fileCnt == 0:
+            print("searchAssembly lib_path error!!!!!")
         for so in f:
             if "libil2cpp" in so:
-                print("found Assembly.so")
+                print("found libil2cpp.so")
                 foundAssembly = 1
                 break
             elif "libmono" in so:
-                print("found libil2cpp.so")
+                print("found libmono*.so")
                 foundAssembly = 2
                 break
             elif "libunity" in so:
-                print("found libmain.so")
+                print("found libunity.so")
+                foundAssembly = 3
+                break
+            elif "libcocos" in so:
+                print("found libcocos*.so")
                 foundAssembly = 3
                 break
             # else:
@@ -90,40 +90,82 @@ def searchAssembly(lib_path):
                 print("found lua")
                 foundAssembly *= 10
                 break
+    return foundAssembly
+
+def unzipApk(root, name): # dir, apkName
+    rootName = os.path.join(root, name)
+    with ZipFile(rootName, 'r') as f:
+        # print("unzipApk extract name:", rootName)
+        packageName, file_ext = os.path.splitext(name)
+        output_folder = os.path.join(root, packageName)
+        os.makedirs(output_folder, exist_ok=True)
+        f.extractall(output_folder + "")
+        # print("unzipApk output_folder:", output_folder)
+    return output_folder
+def unzipApkAndSearch(root, name): # dir,apkname
+    output_folder = unzipApk(root, name)
+    rootName = os.path.join(root, name)
+    # print("unzipApkAndSearch rootName:", rootName, " output_folder:", output_folder)
+
+    lib_path1 = os.path.join(output_folder, "lib\\armeabi-v7a")
+    lib_path2 = os.path.join(output_folder, "lib\\arm64-v8a")
+    lib_path3 = os.path.join(output_folder, "lib\\x86")
+    if os.path.exists(lib_path1):
+        lib_path = lib_path1
+    elif os.path.exists(lib_path2):
+        lib_path = lib_path2
+    elif os.path.exists(lib_path3):
+        lib_path = lib_path3
+    else:
+        print("no lib, no unity")
+        return
+
+    res = searchAssembly(lib_path)
+    print("unzipApkAndSearch rootName:", rootName, " result:", res)
 
 def searchCrawledApks(dir):
-    foundAssembly = False
-    for root, dirs, files in os.walk(dir, topdown=False):
+    depth = 1
+    for root, dirs, files in os.walk(dir, topdown=True):
+        tmp_dir = root[len(dir):]
+        # print("tmp_dir:", tmp_dir, " sep count:", tmp_dir.count(os.sep), " root:", root)
+        sep_count = root[len(dir):].count(os.sep)
+        if sep_count > depth:
+            del dirs[:]
+            continue
+        # print("tmp_dir:", tmp_dir, " sep count:", tmp_dir.count(os.sep), " root-------------------:", root)
         for name in files:
             rootName = os.path.join(root, name)
-            print("rootName:", rootName)
-            # 判断是否为文件（排除文件夹）
-            # if os.path.isfile(name):
-            # 使用os.path.splitext()获取文件名和扩展名
-            file_base_name, file_ext = os.path.splitext(name)
-            # 打印文件名和扩展名
+            # print("searchCrawledApks root:", root, " name:", name)
+            packageName, file_ext = os.path.splitext(name)
             suffix = file_ext[1:]
-            print(f"文件名: {file_base_name}, 扩展名:{suffix}")
+            # print(f"searchCrawledApks rootName:{rootName} 包名: {packageName}, 扩展名:{suffix}, sep_count:{sep_count}")
+
             if "apk" == suffix:
-                found = True
-                print("apkName:", rootName)
-                with ZipFile(rootName, 'r') as f:
-                    print("extract name:", rootName)
-                    output_folder = os.path.join(dir, file_base_name)
-                    os.makedirs(output_folder, exist_ok=True)
-                    f.extractall(output_folder + "")
+                print(f"searchCrawledApks apk rootName:{rootName} 包名: {packageName}, 扩展名:{suffix}")
+                # continue
+                unzipApkAndSearch(root, name)
 
-                    lib_path1 = os.path.join(output_folder, "lib\\armeabi-v7a")
-                    lib_path2 = os.path.join(output_folder, "lib\\arm64-v8a")
-                    lib_path3 = os.path.join(output_folder, "lib\\x86")
-                    if os.path.exists(lib_path1):
-                        lib_path = lib_path1
-                    elif os.path.exists(lib_path2):
-                        lib_path = lib_path2
-                    elif os.path.exists(lib_path3):
-                        lib_path = lib_path3
+            if "xapk" == suffix:
+                output_folder = unzipApk(root, name)
+                # print("searchCrawledApks xapk rootName:", rootName, " packageName:", packageName, " output_folder:",
+                #       output_folder)
+                for root2, dirs2, files2 in os.walk(output_folder, topdown=True):
+                    tmp_dir = root2[len(output_folder):]
+                    # print("searchCrawledApks xapk tmp_dir:", tmp_dir, " sep count:", tmp_dir.count(os.sep))
+                    if root2[len(output_folder):].count(os.sep) > depth:
+                        continue
 
-                    res = searchAssembly(lib_path)
+                    for name3 in files2:
+                        rootName3 = os.path.join(root2, name3)
+                        packageName3, file_ext = os.path.splitext(name3)
+                        # 打印文件名和扩展名
+                        suffix3 = file_ext[1:]
+                        # print(f"searchCrawledApks xapk rootName:{rootName3} 包名: {packageName3}, 扩展名:{suffix3}")
+
+                        if "apk" == suffix3:
+                            unzipApkAndSearch(root2, name3)
+
+
 def closeAd(browser):
     frames = browser.find_elements(By.TAG_NAME, "iframe")
     for frame in frames:
@@ -131,29 +173,29 @@ def closeAd(browser):
             frameLabel = frame.get_attribute("aria-label") #
             frameId = frame.get_attribute("id") #
             frameStyle = frame.get_attribute("style")
-            print("frameLabel:", frameLabel, " id:", frameId)
+            # print("frameLabel:", frameLabel, " id:", frameId)
             if frameLabel == "Advertisement" and "max-height" in frameStyle:
-                print("switch to frame swift")
+                # print("switch to frame swift")
                 browser.switch_to.frame(frame)
 
                 try:
                     dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
                     if dismissBtn:
-                        print("dismissBtn:", dismissBtn)
+                        # print("dismissBtn:", dismissBtn)
                         dismissBtn.click()
                     break  # Exit loop once you switch to the correct frame
                 except:
                     framesAd = browser.find_elements(By.TAG_NAME, "iframe")
                     for frameAd in framesAd:
                         frameAdId = frameAd.get_attribute("id")
-                        print("frameAdId:", frameAdId)
+                        # print("frameAdId:", frameAdId)
                         if frameAdId == "ad_iframe":
-                            print("switch to frame Ad")
+                            # print("switch to frame Ad")
                             browser.switch_to.frame(frameAd)
 
                             dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
                             if dismissBtn:
-                                print("dismissBtn:", dismissBtn)
+                                # print("dismissBtn:", dismissBtn)
                                 dismissBtn.click()
                             break  # Exit loop once you switch to the correct frame
         except:
@@ -171,39 +213,11 @@ def TestApkpure():
         "profile.default_content_setting_values.automatic_downloads": 1,  # 允许多文件下载
         # 无用 "debuggerAddress": "127.0.0.1:62271" #只打开一个浏览器实例 chrome所在路劲\chrome.exe --remote-debugging-port=12306 https://blog.csdn.net/Qwertyuiop2016/article/details/103488817
     }
-    # for root, dirs, files in os.walk(dir, topdown=False):
-    #     for name in files:
-    #         print(os.path.join(root, name))
-    #         # 判断是否为文件（排除文件夹）
-    #         # if os.path.isfile(name):
-    #             # 使用os.path.splitext()获取文件名和扩展名
-    #         file_base_name, file_ext = os.path.splitext(name)
-    #         # 打印文件名和扩展名
-    #         print(f"文件名: {file_base_name}, 扩展名: {file_ext[1:]}")
-    #     for name in dirs:
-    #         print(os.path.join(root, name))
 
     option.add_experimental_option("prefs", prefs)
     option.add_experimental_option("detach", True)
     option.add_argument("disable-popup-blocking")
-    # option.add_experimental_option("debuggerAddress", "127.0.0.1:12306")
     browser = webdriver.Chrome(options=option)
-
-    # try:
-    #     browser.get("http://www.google.com")
-    #     input_element = browser.find_element_by_name("q")
-    #     input_element.send_keys("fuck you")
-    #     input_element.submit()
-    #     link = browser.find_element_by_xpath(
-    #         '//*[@id="rso"]/div[1]/div/div[2]/div/div/h3/a').click()
-    #     #     for windows change command to control.
-    #     ActionChains(browser).move_to_element(link).key_down(Keys.COMMAND).click(link).key_up(Keys.COMMAND).perform()
-    #     time.sleep(5)
-    # except Exception as e:
-    #     print(e)
-    #     browser.close()
-    #
-    # return
 
     # browser.get(r'https://apkpure.com/game_casual')
     browser.get(r'https://apkpure.com/cn/game_casual')
@@ -232,11 +246,22 @@ def TestApkpure():
     # js_code = 'window.scrollBy(0, document.body.scrollHeight)'  # 滑动到底
     browser.execute_script(script=js_code)
 
-    count = 1
+    dic_package = {}
+    # today = datetime.date.today()
+    now = datetime.now()
+    date_string = now.strftime("%Y-%m-%d")
+    print(date_string)  # Output: 2023-09-15 14:45:30
+    dbName = 'dic_package_'+date_string+'.pkl'
+    try:
+        with open(dbName, 'rb') as f:
+            dic_package = pickle.load(f)
+            print("dic_package read ok!")
+    except IOError:
+        print("no file dic_package")
     for i in range(len(latestGames)):
-        if count > 5:
-            break
-        count += 1
+        # if count > 5:
+        #     break
+        print("count:", i)
         # browser.implicitly_wait(5)
         browser.switch_to.window(browser.window_handles[0])
         item = latestGames[i]
@@ -245,40 +270,36 @@ def TestApkpure():
         # 判断元素是否可以点击
         # answer = item.is_enabled()
         print("href:", href)
-        print(f'item:{i}:\t{item} latestGames:{latestGames}')
+        # print(f'item:{i}:\t{item} latestGames:{latestGames}')
 
         # item.screenshot("item.png")
 
-        # action = ActionChains(browser)
-        # action.key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
+        # 以下代码经常无法打开新的标签，而是在首页上打开
         # ActionChains(browser).key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
-        # action.key_down(Keys.CONTROL).perform()
-        # ActionChains(browser).key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
-        # item.click()
-        # action.key_up(Keys.CONTROL).perform()
         # ActionChains(browser).move_to_element(item).key_down(Keys.CONTROL).click(item).key_up(Keys.CONTROL).perform()
 
         browser.execute_script("window.open('');")
         window_numb = len(browser.window_handles)
         browser.switch_to.window(browser.window_handles[window_numb-1])
         browser.get(href)
-        # print("go to new window_handle after sleep num:", window_numb)
-        # if window_numb > 1:
-        #     browser.switch_to.window(browser.window_handles[window_numb-1])
 
         closeAd(browser)##############
-        # return
 
-        apkName = browser.find_element(By.XPATH, '//*[@class="title_link no-rating"]/h1').text
+        apkName = browser.find_element(By.XPATH, '//*[contains(@class, "title_link")]/h1').text
         company = browser.find_element(By.XPATH, '//*[@class="details_sdk"]/span[@class="developer"]/a').text
-        print("--------------- apk detail name:", apkName, " company:", company)
+        packageName = browser.find_element(By.XPATH, '/html/body/main').get_attribute("data-pkg")
+        print("--------------- apk detail name:", apkName, " company:", company, " packageName:", packageName)
+        if packageName in dic_package:
+            print("already download package:", packageName)
+            continue
+        else:
+            dic_package[packageName] = False
 
         js_code = 'window.scrollBy(0, 800)'  # 滑动指定距离
         # js_code = 'window.scrollBy(0, document.body.scrollHeight)'  # 滑动到底
         browser.execute_script(script=js_code)
         # browser.execute_script("arguments[0].scrollIntoView();", downloadBtn)
         print("--------------- scroll800")
-        # continue
 # 更多版本
         try:
 #         if True:
@@ -324,7 +345,6 @@ def TestApkpure():
         #     lastBtnXpath = '//ul/li[@class="ver_item_state"]'  # 有"更多版本"
         #     print("error no show more button")
 
-        # lastBtnXpath = '//ul/li/a[@class="ver_download_link"]/div[@class="ver_download_btn"]'
         # try关闭广告
         closeAd(browser)  ##############
         downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)#最后一个download按钮
@@ -335,13 +355,11 @@ def TestApkpure():
         # downloadBtn.click()
         ActionChains(browser).move_to_element(downloadBtn).click(downloadBtn).perform()
 
-
-
         downloadBtns = browser.find_elements(By.XPATH, '//*[@id="version-list"]//a[@class="download-btn"]')  # 最后一个download按钮
         print("downloadBtns:", downloadBtns)
-        downloadBtns[len(downloadBtns) - 1].click()
-
-        i+=1
+        download = downloadBtns[len(downloadBtns) - 1]
+        ActionChains(browser).move_to_element(download).click(download).perform()
+        dic_package[packageName] = True
         # if len(browser.window_handles) >1:
         #     browser.close()
         #     browser.switch_to.window(browser.window_handles[0])
@@ -356,8 +374,10 @@ def TestApkpure():
         #     print("下载成功！")
         # else:
         #     print("下载失败！")
-        print("checked apk:", apkName, " company:", company)
 
+    with open(dbName, 'wb') as f:
+        pickle.dump(dic_package, f)
+        print("dic_package write ok!")
 
 def searchApkInternal(dir):
     found = False
@@ -389,7 +409,7 @@ def searchApkInternal(dir):
 def clickDownload():
     pass
 
-# print(">>>>>>>>>>")
-TestApkpure()
 # #####searchApkInternal(apks_dir)
-# searchCrawledApks(apks_dir)
+
+# TestApkpure()
+searchCrawledApks(apks_dir)
