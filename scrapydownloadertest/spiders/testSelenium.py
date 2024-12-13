@@ -26,6 +26,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from zipfile import ZipFile
+import difflib
 
 # 参考https://stackoverflow.com/questions/70583894/cannot-click-a-button-using-python-selenium-on-a-certain-website
 
@@ -117,12 +118,30 @@ def unzipApkAndSearch(root, name): # dir,apkname
     elif os.path.exists(lib_path3):
         lib_path = lib_path3
     else:
-        print("no lib, no unity")
+        # print("no lib, no unity")
         return
 
     res = searchAssembly(lib_path)
     print("unzipApkAndSearch rootName:", rootName, " result:", res)
 
+def getAllCrawledApks(dir):
+    dic_all_crawled_apks = []
+    depth = 1
+    for root, dirs, files in os.walk(dir, topdown=True):
+        tmp_dir = root[len(dir):]
+        sep_count = tmp_dir.count(os.sep)
+        print("getAllCrawledApks tmp_dir:", tmp_dir, " sep count:", sep_count, " files:", files)
+        if sep_count > depth:
+            del dirs[:]
+            continue
+        for apk in files:
+            apkName, file_ext = os.path.splitext(apk)
+            suffix = file_ext[1:]
+            print("getAllCrawledApks apk:",apk, " apkName:", apkName, " suffix:", suffix, " tmp_dir:", tmp_dir)
+            if suffix == "apk" or suffix == "xapk":
+                dic_all_crawled_apks.append(apk)
+    print("getAllCrawledApks dic_all_crawled_apks:", dic_all_crawled_apks)
+    return dic_all_crawled_apks
 def searchCrawledApks(dir):
     depth = 1
     for root, dirs, files in os.walk(dir, topdown=True):
@@ -173,9 +192,9 @@ def closeAd(browser):
             frameLabel = frame.get_attribute("aria-label") #
             frameId = frame.get_attribute("id") #
             frameStyle = frame.get_attribute("style")
-            # print("frameLabel:", frameLabel, " id:", frameId)
+            print("frameLabel:", frameLabel, " id:", frameId)
             if frameLabel == "Advertisement" and "max-height" in frameStyle:
-                # print("switch to frame swift")
+                print("switch to frame swift")
                 browser.switch_to.frame(frame)
 
                 try:
@@ -188,14 +207,14 @@ def closeAd(browser):
                     framesAd = browser.find_elements(By.TAG_NAME, "iframe")
                     for frameAd in framesAd:
                         frameAdId = frameAd.get_attribute("id")
-                        # print("frameAdId:", frameAdId)
+                        print("frameAdId:", frameAdId)
                         if frameAdId == "ad_iframe":
-                            # print("switch to frame Ad")
+                            print("switch to frame Ad")
                             browser.switch_to.frame(frameAd)
 
                             dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
                             if dismissBtn:
-                                # print("dismissBtn:", dismissBtn)
+                                print("dismissBtn:", dismissBtn)
                                 dismissBtn.click()
                             break  # Exit loop once you switch to the correct frame
         except:
@@ -206,6 +225,7 @@ def closeAd(browser):
 
 apks_dir = r"E:\crawl_apks"
 def TestApkpure():
+    dic_all_crawled_apks = getAllCrawledApks(apks_dir)
     option = webdriver.ChromeOptions()
 
     prefs = {
@@ -288,12 +308,25 @@ def TestApkpure():
         apkName = browser.find_element(By.XPATH, '//*[contains(@class, "title_link")]/h1').text
         company = browser.find_element(By.XPATH, '//*[@class="details_sdk"]/span[@class="developer"]/a').text
         packageName = browser.find_element(By.XPATH, '/html/body/main').get_attribute("data-pkg")
-        print("--------------- apk detail name:", apkName, " company:", company, " packageName:", packageName)
-        if packageName in dic_package:
-            print("already download package:", packageName)
+        print("--------------- apk detail apkName:", apkName, " company:", company, " packageName:", packageName)
+        print("dic_all_crawled_apks:", dic_all_crawled_apks)
+        found = False
+        for apk in dic_all_crawled_apks:
+            apkSub = apk[0:len(apkName)]
+            seq = difflib.SequenceMatcher(lambda x: x in "-_:", apkSub, apkName)
+            ratio = seq.ratio()
+            # print('difflib apksub:', apkSub, 'apkName', apkName, ' similarity: ', ratio)
+            if ratio > 0.9:
+                found = True
+                print("already download apkName:", apkName)
+                break
+        if found:
             continue
-        else:
-            dic_package[packageName] = False
+        # if packageName in dic_package:
+        #     print("already download package:", packageName)
+        #     continue
+        # else:
+        #     dic_package[packageName] = False
 
         js_code = 'window.scrollBy(0, 800)'  # 滑动指定距离
         # js_code = 'window.scrollBy(0, document.body.scrollHeight)'  # 滑动到底
@@ -325,22 +358,22 @@ def TestApkpure():
             browser.execute_script("arguments[0].scrollIntoView();", showLessBtn)
 
             lastBtnXpath = '//div[@class="ver_content_box"]/ul/li[@class="ver_item_state"][last()]'  # 有"更多版本"
-            downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
+            # downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
             print("have show more button", downloadBtn)
         except Exception as e:
             try:
                 print("except show more button,try last button", downloadBtn)
                 lastBtnXpath = '//ul/li[last()]/a/div[@role="button"]'  # 没有"更多版本",多个下载
-                downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)
+                # downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)
             except:
                 try:
-                    print("only one download button", downloadBtn)
+                    print("only one download button 111")
                     lastBtnXpath = '//div/a/span[@class="download old_versions_download"]'# 只有一个下载
-                    downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
+                    # downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
                 except:
-                    print("only one download button", downloadBtn)
+                    print("only one download button 222")
                     lastBtnXpath = '//div[@class="old-versions  google-anno-skip   "]/div/a[@class="version-item dt-old-versions-variant"]/span'  # 只有一个历史版本下载
-                    downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
+                    # downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
         # finally:
         #     lastBtnXpath = '//ul/li[@class="ver_item_state"]'  # 有"更多版本"
         #     print("error no show more button")
@@ -410,6 +443,35 @@ def clickDownload():
     pass
 
 # #####searchApkInternal(apks_dir)
+# getAllCrawledApks(apks_dir)
+
+#0.771
+# str1 = "Crazy Driver 3D_ Car Traffic_2.7.1_APKPure"
+# str2 = "Crazy Driver 3D: Car Traffic"
+
+#1.0
+# str1 = "Crazy Driver 3D_ Car Traffic"
+# str2 = "Crazy Driver 3D_ Car Traffic"
+
+#0.96
+# str1 = "Crazy Driver 3D_ Car Traffi"
+# str2 = "Crazy Driver 3D Car Traffic"
+
+# difflib 去掉列表中不需要比较的字符
+# seq = difflib.SequenceMatcher(lambda x: x in ' _:', str1, str2)
+# ratio = seq.ratio()
+# print('difflib similarity2: ', ratio)
+
+# str1 = "Merge Forest - Merge Games_1.5.0_APKPure.apk"
+# str2 = "Crazy Driver 3D: Car Traffic"
+#
+# apkSub = str1[0:len(str2)]
+# apkName = str2
+# seq = difflib.SequenceMatcher(lambda x: x in " -_:", apkSub, apkName)
+# ratio = seq.ratio()
+# print('difflib apksub:', apkSub, 'apkName', apkName, ' similarity: ', ratio)
 
 # TestApkpure()
 searchCrawledApks(apks_dir)
+
+
