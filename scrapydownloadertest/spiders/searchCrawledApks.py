@@ -1,32 +1,4 @@
 # -*- coding: utf-8 -*-
-
-# from scrapy.spiders import Spider,CrawlSpider,Rule
-# from scrapy.loader import ItemLoader
-# from scrapy.selector import Selector
-# from scrapy.http import Request
-# from scrapy import FormRequest
-# from scrapydownloadertest.items import FileDownloadItem, ImgDownloadItem
-# from scrapy.utils.response import open_in_browser
-# from scrapy.linkextractors import LinkExtractor
-# from bs4 import BeautifulSoup
-# import sys
-# import re
-# import os
-# import pickle
-# import datetime
-# from datetime import date, datetime
-# from urllib import parse
-#
-# from selenium import webdriver
-# import time
-# from selenium.webdriver.common.action_chains import ActionChains
-# from selenium.webdriver.common.keys import Keys
-# from selenium import webdriver
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.support.ui import WebDriverWait
-# from selenium.webdriver.support import expected_conditions as EC
-# from zipfile import ZipFile
-# import difflib
 from crawl_common import *
 def searchCrawledApks(dir):
     depth = 1

@@ -1,65 +1,37 @@
 # -*- coding: utf-8 -*-
-
-# from scrapy.spiders import Spider,CrawlSpider,Rule
-# from scrapy.loader import ItemLoader
-# from scrapy.selector import Selector
-# from scrapy.http import Request
-# from scrapy import FormRequest
-# from scrapydownloadertest.items import FileDownloadItem, ImgDownloadItem
-# from scrapy.utils.response import open_in_browser
-# from scrapy.linkextractors import LinkExtractor
-# from bs4 import BeautifulSoup
-# import sys
-# import re
-# import os
-# import pickle
-# import datetime
-# from datetime import date, datetime
-# from urllib import parse
-#
-# from selenium import webdriver
-# import time
-# from selenium.webdriver.common.action_chains import ActionChains
-# from selenium.webdriver.common.keys import Keys
-# from selenium import webdriver
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.support.ui import WebDriverWait
-# from selenium.webdriver.support import expected_conditions as EC
-# from zipfile import ZipFile
-# import difflib
 from crawl_common import *
-def searchAssembly(lib_path):
-    foundAssembly = 0
-    # print("lib_path:", lib_path)
-    for r, d, f in os.walk(lib_path, topdown= True):
-        fileCnt = len(f)
-        print("lib so fileCount:", fileCnt, " so:", f)
-        if fileCnt == 0:
-            print("searchAssembly lib_path error!!!!!")
-        for so in f:
-            if "libil2cpp" in so:
-                print("found libil2cpp.so")
-                foundAssembly = 1
-                break
-            elif "libmono" in so:
-                print("found libmono*.so")
-                foundAssembly = 2
-                break
-            elif "libunity" in so:
-                print("found libunity.so")
-                foundAssembly = 3
-                break
-            elif "libcocos" in so:
-                print("found libcocos*.so")
-                foundAssembly = 3
-                break
-            # else:
-            #     print("found no unity")
-            if "lua" in so:
-                print("found lua")
-                foundAssembly *= 10
-                break
-    return foundAssembly
+# def searchAssembly(lib_path):
+#     foundAssembly = 0
+#     # print("lib_path:", lib_path)
+#     for r, d, f in os.walk(lib_path, topdown= True):
+#         fileCnt = len(f)
+#         print("lib so fileCount:", fileCnt, " so:", f)
+#         if fileCnt == 0:
+#             print("searchAssembly lib_path error!!!!!")
+#         for so in f:
+#             if "libil2cpp" in so:
+#                 print("found libil2cpp.so")
+#                 foundAssembly = 1
+#                 break
+#             elif "libmono" in so:
+#                 print("found libmono*.so")
+#                 foundAssembly = 2
+#                 break
+#             elif "libunity" in so:
+#                 print("found libunity.so")
+#                 foundAssembly = 3
+#                 break
+#             elif "libcocos" in so:
+#                 print("found libcocos*.so")
+#                 foundAssembly = 3
+#                 break
+#             # else:
+#             #     print("found no unity")
+#             if "lua" in so:
+#                 print("found lua")
+#                 foundAssembly *= 10
+#                 break
+#     return foundAssembly
 
 def closeAd(browser):
     frames = browser.find_elements(By.TAG_NAME, "iframe")
@@ -180,7 +152,11 @@ def TestApkpure():
         closeAd(browser)##############
 
         apkName = browser.find_element(By.XPATH, '//*[contains(@class, "title_link")]/h1').text
-        company = browser.find_element(By.XPATH, '//*[@class="details_sdk"]/span[@class="developer"]/a').text
+        company = "null"
+        try:
+            company = browser.find_element(By.XPATH, '//*[@class="details_sdk"]/span[@class="developer"]/a').text
+        except:
+            company = "except"
         packageName = browser.find_element(By.XPATH, '/html/body/main').get_attribute("data-pkg")
         print("--------------- apk detail apkName:", apkName, " company:", company, " packageName:", packageName)
         print("dic_all_crawled_apks:", dic_all_crawled_apks)
@@ -232,22 +208,22 @@ def TestApkpure():
             browser.execute_script("arguments[0].scrollIntoView();", showLessBtn)
 
             lastBtnXpath = '//div[@class="ver_content_box"]/ul/li[@class="ver_item_state"][last()]'  # 有"更多版本"
-            # downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
+            downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮, 如果找不到会出现except
             print("have show more button", downloadBtn)
         except Exception as e:
             try:
-                print("except show more button,try last button", downloadBtn)
-                lastBtnXpath = '//ul/li[last()]/a/div[@role="button"]'  # 没有"更多版本",多个下载
-                # downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)
+                print("except show more button,try last button")
+                lastBtnXpath = '//ul/li[last()]/a/div[@role="button"]'  # 没有"更多版本",多个下载, 如果找不到会出现except
+                downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)
             except:
                 try:
                     print("only one download button 111")
                     lastBtnXpath = '//div/a/span[@class="download old_versions_download"]'# 只有一个下载
-                    # downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
+                    downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮, 如果找不到会出现except
                 except:
                     print("only one download button 222")
                     lastBtnXpath = '//div[@class="old-versions  google-anno-skip   "]/div/a[@class="version-item dt-old-versions-variant"]/span'  # 只有一个历史版本下载
-                    # downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮
+                    downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮, 如果找不到会出现except
         # finally:
         #     lastBtnXpath = '//ul/li[@class="ver_item_state"]'  # 有"更多版本"
         #     print("error no show more button")

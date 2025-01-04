@@ -113,6 +113,43 @@ def getAllCrawledApks(dir):
     print("getAllCrawledApks dic_all_crawled_apks:", dic_all_crawled_apks)
     return dic_all_crawled_apks
 
+def closeAd(browser):
+    frames = browser.find_elements(By.TAG_NAME, "iframe")
+    for frame in frames:
+        try:
+            frameLabel = frame.get_attribute("aria-label") #
+            frameId = frame.get_attribute("id") #
+            frameStyle = frame.get_attribute("style")
+            print("frameLabel:", frameLabel, " id:", frameId)
+            if frameLabel == "Advertisement" and "max-height" in frameStyle:
+                print("switch to frame swift")
+                browser.switch_to.frame(frame)
+
+                try:
+                    dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
+                    if dismissBtn:
+                        # print("dismissBtn:", dismissBtn)
+                        dismissBtn.click()
+                    break  # Exit loop once you switch to the correct frame
+                except:
+                    framesAd = browser.find_elements(By.TAG_NAME, "iframe")
+                    for frameAd in framesAd:
+                        frameAdId = frameAd.get_attribute("id")
+                        print("frameAdId:", frameAdId)
+                        if frameAdId == "ad_iframe":
+                            print("switch to frame Ad")
+                            browser.switch_to.frame(frameAd)
+
+                            dismissBtn = browser.find_element(By.XPATH, '//*[@id="dismiss-button"]')
+                            if dismissBtn:
+                                print("dismissBtn:", dismissBtn)
+                                dismissBtn.click()
+                            break  # Exit loop once you switch to the correct frame
+        except:
+            print("closeAd iframe except!")
+
+    browser.switch_to.default_content()
+
 # def searchApkInternal(dir):
 #     found = False
 #     for root, dirs, files in os.walk(dir, topdown=False):
