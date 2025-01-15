@@ -92,7 +92,7 @@ def unzipApkAndSearch(root, name): # dir,apkname
         return
 
     res = searchAssembly(lib_path)
-    print("unzipApkAndSearch rootName:", rootName, " result:", res)
+    # print("unzipApkAndSearch rootName:", rootName, " result:", res)
 
 def getAllCrawledApks(dir):
     dic_all_crawled_apks = []

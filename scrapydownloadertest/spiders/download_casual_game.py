@@ -1,38 +1,5 @@
 # -*- coding: utf-8 -*-
 from crawl_common import *
-# def searchAssembly(lib_path):
-#     foundAssembly = 0
-#     # print("lib_path:", lib_path)
-#     for r, d, f in os.walk(lib_path, topdown= True):
-#         fileCnt = len(f)
-#         print("lib so fileCount:", fileCnt, " so:", f)
-#         if fileCnt == 0:
-#             print("searchAssembly lib_path error!!!!!")
-#         for so in f:
-#             if "libil2cpp" in so:
-#                 print("found libil2cpp.so")
-#                 foundAssembly = 1
-#                 break
-#             elif "libmono" in so:
-#                 print("found libmono*.so")
-#                 foundAssembly = 2
-#                 break
-#             elif "libunity" in so:
-#                 print("found libunity.so")
-#                 foundAssembly = 3
-#                 break
-#             elif "libcocos" in so:
-#                 print("found libcocos*.so")
-#                 foundAssembly = 3
-#                 break
-#             # else:
-#             #     print("found no unity")
-#             if "lua" in so:
-#                 print("found lua")
-#                 foundAssembly *= 10
-#                 break
-#     return foundAssembly
-
 def closeAd(browser):
     frames = browser.find_elements(By.TAG_NAME, "iframe")
     for frame in frames:
@@ -86,7 +53,9 @@ def TestApkpure():
     browser = webdriver.Chrome(options=option)
 
     # browser.get(r'https://apkpure.com/game_casual')
-    browser.get(r'https://apkpure.com/cn/game_casual')
+    # browser.get(r'https://apkpure.com/cn/game_casual')
+    # browser.get(r'https://apkpure.com/cn/game_arcade')
+    browser.get(r'https://apkpure.com/game_simulation')
     print("TestApkpure window handle:", browser.current_window_handle)
     # 最近更新的游戏
     xpath_latestGames = '/html/body/main/div[5]/div[2]/div[1]/div/div/ul/li/div/a[1]'
@@ -221,9 +190,13 @@ def TestApkpure():
                     lastBtnXpath = '//div/a/span[@class="download old_versions_download"]'# 只有一个下载
                     downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮, 如果找不到会出现except
                 except:
-                    print("only one download button 222")
-                    lastBtnXpath = '//div[@class="old-versions  google-anno-skip   "]/div/a[@class="version-item dt-old-versions-variant"]/span'  # 只有一个历史版本下载
-                    downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮, 如果找不到会出现except
+                    try:
+                        print("only one download button 222")
+                        lastBtnXpath = '//div[@class="old-versions  google-anno-skip   "]/div/a[@class="version-item dt-old-versions-variant"]/span'  # 只有一个历史版本下载
+                        downloadBtn = browser.find_element(By.XPATH, lastBtnXpath)  # 最后一个download按钮, 如果找不到会出现except
+                    except:
+                        print("no download button, apk:", apkName)
+                        break
         # finally:
         #     lastBtnXpath = '//ul/li[@class="ver_item_state"]'  # 有"更多版本"
         #     print("error no show more button")

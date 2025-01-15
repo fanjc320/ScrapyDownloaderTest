@@ -86,7 +86,7 @@ def TestApkpure():
     browser = webdriver.Chrome(options=option)
 
     # browser.get(r'https://apkpure.com/melon-maker-fruit-game/com.superbox.aos.suikagame/versions') # ok
-    browser.get(r'https://apkpure.com/match-3d-blast-matching-games/com.puzzle.fun.free.matching3d')
+    browser.get(r'https://apkpure.com/age-of-war-2/com.maxgames.aow2/versions')
     # print("TestApkpure window handle:", browser.current_window_handle)
 
     try:
